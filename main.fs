@@ -8,7 +8,6 @@ open Suave.Http.Successful
 open Suave.Http.RequestErrors
 open Suave.Types
 open Suave.Utils
-open Suave.Utils.Option
 open Mustache
 
 let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijn;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
@@ -44,7 +43,7 @@ let index_page wp =
     let html = index_template.Render data
     OK html wp
 
-let webhook = request(fun req -> OK ("Hello " + (or_default "world" <| req.form ? name)))
+let webhook = request(fun req -> OK ("Hello " + (defaultArg (req.form ? name) "world")))
 
 let app = choose [url "/" >>= index_page
                   url "/webhook" >>= POST >>= webhook
