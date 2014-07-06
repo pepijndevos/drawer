@@ -1,6 +1,9 @@
 open ServiceStack.OrmLite
 open ServiceStack.OrmLite.PostgreSQL
 open ServiceStack.DataAnnotations
+open Suave.Web
+open Suave.Http.Successful
+open DotLiquid
 
 let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijn;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
 
@@ -24,6 +27,4 @@ let post = {
   Date = System.DateTime.Now
 }
 
-System.Console.Write("Hallo world\n")
-let result = db.Insert(post)
-System.Console.Write("Inserted {0}\n", result)
+web_server default_config  (OK "Hello World")

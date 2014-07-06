@@ -11,7 +11,10 @@ $(CACHEDIR):
 
 $(OUTDIR): $(CACHEDIR)
 	mkdir -p $(OUTDIR)
-	cp $(CACHEDIR)/*/lib/net40/*.dll $(OUTDIR)
+	cp $(CACHEDIR)/ServiceStack.*/lib/net40/*.dll $(OUTDIR)
+	cp $(CACHEDIR)/Suave.*/lib/*.dll $(OUTDIR)
+	cp $(CACHEDIR)/Npgsql.*/lib/net40/Npgsql.dll $(OUTDIR)
+	cp $(CACHEDIR)/DotLiquid.*/lib/NET45/DotLiquid.dll $(OUTDIR)
 
 $(OUTDIR)/main.exe: $(OUTDIR) $(SOURCES)
 	$(FSC) $(SOURCES) -o $(OUTDIR)/main.exe -I $(OUTDIR) \
