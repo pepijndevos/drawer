@@ -1,3 +1,4 @@
 Suave
 ServiceStack.OrmLite.Postgresql
-DotLiquid
+MarkdownSharp
+mustache-sharp
