@@ -16,37 +16,50 @@ let db = factory.OpenDbConnection()
 
 [<CLIMutable>]
 type Blogpost = {
-    [<AutoIncrement>]
-    Id : int
-    Title : string
-    Body : string
-    Date : System.DateTime
+  [<AutoIncrement>]
+  Id : int
+  Title : string
+  Body : string
+  Date : System.DateTime
 }
 db.CreateTable<Blogpost>()
 
 let create_post title body =
-    db.Insert {
-        Id = 0
-        Title = title
-        Body = body
-        Date = System.DateTime.Now
-    }
+  ignore <| db.Insert {
+    Id = 0
+    Title = title
+    Body = body
+    Date = System.DateTime.Now
+  }
 
 let compiler = FormatCompiler()
 let index_template = compiler.Compile (System.IO.File.ReadAllText "templates/index.html")
 type IndexData = {
-    Posts : System.Collections.Generic.List<Blogpost>
+  Posts : System.Collections.Generic.List<Blogpost>
 }
 
-let index_page wp =
-    let data = {Posts = db.Select<Blogpost>("SELECT * FROM blogpost ORDER BY date DESC LIMIT 3")}
-    let html = index_template.Render data
-    OK html wp
+let index_page req =
+  let data = {Posts = db.Select<Blogpost>("SELECT * FROM blogpost ORDER BY date DESC LIMIT 3")}
+  let html = index_template.Render data
+  OK html
 
-let webhook = request(fun req -> OK ("Hello " + (defaultArg (req.form ? name) "world")))
+let webhook req =
+  let mtitle = look_up req.form "subject"
+  let mtext = look_up req.form "body-plain"
+  match [mtitle; mtext] with
+  | [Some title; Some text] -> create_post title text
+  | _ -> ()
+  OK "OK"
 
-let app = choose [url "/" >>= index_page
-                  url "/webhook" >>= POST >>= webhook
+let app = choose [url "/" >>= request index_page
+                  url "/webhook" >>= POST >>= request webhook
                   NOT_FOUND "Found no handlers"]
 
-web_server default_config  app
+let cfg = {
+  default_config with
+    bindings = [ { scheme = HTTP
+                   ip     = System.Net.IPAddress.Parse "0.0.0.0"
+                   port   = 8080us } ]
+}
+
+web_server cfg app
