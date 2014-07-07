@@ -7,7 +7,8 @@ SOURCES=main.fs
 all: $(OUTDIR)/main.exe
 
 $(CACHEDIR):
-	xargs -I % -a requirements.txt $(NUGET) install "%" -OutputDirectory $(CACHEDIR)
+	cat requirements.txt | xargs -I % \
+		$(NUGET) install "%" -OutputDirectory $(CACHEDIR)
 
 $(OUTDIR): $(CACHEDIR)
 	mkdir -p $(OUTDIR)
