@@ -19,7 +19,7 @@ $(OUTDIR): $(CACHEDIR)
 	cp $(CACHEDIR)/MarkdownSharp.*/lib/35/MarkdownSharp.dll $(OUTDIR)
 
 $(OUTDIR)/main.exe: $(OUTDIR) $(SOURCES)
-	$(FSC) $(SOURCES) -o $(OUTDIR)/main.exe -I $(OUTDIR) \
+	$(FSC) $(SOURCES) -g -o $(OUTDIR)/main.exe -I $(OUTDIR) \
 		$(patsubst %,-r %,$(notdir $(wildcard $(OUTDIR)/*.dll)))
 
 clean:

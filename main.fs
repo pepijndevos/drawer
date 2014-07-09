@@ -8,6 +8,7 @@ open Suave.Http.Successful
 open Suave.Http.RequestErrors
 open Suave.Types
 open Suave.Utils
+open Suave.Log
 open Mustache
 
 let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijn;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
@@ -55,8 +56,11 @@ let app = choose [url "/" >>= request index_page
                   url "/webhook" >>= POST >>= request webhook
                   NOT_FOUND "Found no handlers"]
 
+let logger = Loggers.sane_defaults_for Verbose
+
 let cfg = {
   default_config with
+    logger = logger
     bindings = [ { scheme = HTTP
                    ip     = System.Net.IPAddress.Parse "0.0.0.0"
                    port   = 8080us } ]
