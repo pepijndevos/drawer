@@ -10,8 +10,9 @@ open Suave.Types
 open Suave.Utils
 open Suave.Log
 open Mustache
+open MarkdownSharp
 
-let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijn;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
+let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijndevos;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
 
 let db = factory.OpenDbConnection()
 
@@ -45,12 +46,19 @@ let index_page req =
   OK html
 
 let webhook req =
-  let mtitle = look_up req.form "subject"
-  let mtext = look_up req.form "body-plain"
-  match [mtitle; mtext] with
-  | [Some title; Some text] -> create_post title text
-  | _ -> ()
-  OK "OK"
+  let mtitle = get_first req.multipart_fields "\"subject\""
+  let mplain = get_first req.multipart_fields "\"body-plain\""
+  let mhtml  = get_first req.multipart_fields "\"body-html\""
+  match (mtitle, mplain, mhtml) with
+  | (Some title, _, Some html) ->
+    create_post title html
+    OK "Posted"
+  | (Some title, Some text, None) ->
+    let html = Markdown().Transform(text)
+    create_post title html
+    OK "Posted"
+  | _ ->
+    NOT_ACCEPTABLE "Missing parameters"
 
 let app = choose [url "/" >>= request index_page
                   url "/webhook" >>= POST >>= request webhook
