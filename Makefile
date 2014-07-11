@@ -1,14 +1,15 @@
-NUGET=mono tools/nuget.exe
-FSC=fsharpc
 CACHEDIR=deps
 OUTDIR=build
 SOURCES=main.fs
 
 all: $(OUTDIR)/main.exe
 
-$(CACHEDIR): requirements.txt
+nuget.exe:
+	curl -o nuget.exe -L http://nuget.org/nuget.exe
+
+$(CACHEDIR): requirements.txt nuget.exe
 	cat requirements.txt | xargs -I % \
-		$(NUGET) install "%" -OutputDirectory $(CACHEDIR)
+		mono nuget.exe install "%" -OutputDirectory $(CACHEDIR)
 
 $(OUTDIR): $(CACHEDIR)
 	mkdir -p $(OUTDIR)
@@ -19,8 +20,11 @@ $(OUTDIR): $(CACHEDIR)
 	cp $(CACHEDIR)/MarkdownSharp.*/lib/35/MarkdownSharp.dll $(OUTDIR)
 
 $(OUTDIR)/main.exe: $(OUTDIR) $(SOURCES)
-	$(FSC) $(SOURCES) -g -o $(OUTDIR)/main.exe -I $(OUTDIR) \
+	fsharpc $(SOURCES) -g -o $(OUTDIR)/main.exe -I $(OUTDIR) \
 		$(patsubst %,-r %,$(notdir $(wildcard $(OUTDIR)/*.dll)))
 
 clean:
 	rm -rf $(OUTDIR) $(CACHEDIR)
+
+standalone: $(OUTDIR)/main.exe
+	mkbundle -L $(OUTDIR) --static $(OUTDIR)/main.exe $(OUTDIR)/*.dll -o $(OUTDIR)/standalone
