@@ -46,9 +46,9 @@ let index_page req =
   OK html
 
 let webhook req =
-  let mtitle = get_first req.multipart_fields "\"subject\""
-  let mplain = get_first req.multipart_fields "\"body-plain\""
-  let mhtml  = get_first req.multipart_fields "\"body-html\""
+  let mtitle = get_first req.multipart_fields "subject"
+  let mplain = get_first req.multipart_fields "body-plain"
+  let mhtml  = get_first req.multipart_fields "body-html"
   match (mtitle, mplain, mhtml) with
   | (Some title, _, Some html) ->
     create_post title html
