@@ -12,7 +12,26 @@ open Suave.Log
 open Mustache
 open MarkdownSharp
 
-let factory = new OrmLiteConnectionFactory("Server=127.0.0.1;Port=5432;User Id=pepijndevos;Password=password;Database=suaveblog;", PostgreSqlDialect.Provider)
+let toOption a =
+  match a with
+  | null -> None
+  | _ -> Some a
+
+let env =
+  toOption << System.Environment.GetEnvironmentVariable
+
+let dburl = Option.map (fun url -> System.Uri url) <| env "DATABASE_URL"
+
+let format_connect_string (uri : System.Uri) =
+  let [|username; password|] = uri.UserInfo.Split(':')
+  sprintf "Server=%s;Port=%d;User Id=%s;Password=%s;Database=%s;"
+          uri.Host uri.Port username password (uri.AbsolutePath.Trim '/')
+
+let connect_string =
+  defaultArg (Option.map format_connect_string dburl)
+             "Server=127.0.0.1;Port=5432;User Id=postgres;Database=suaveblog;"
+
+let factory = new OrmLiteConnectionFactory(connect_string, PostgreSqlDialect.Provider)
 
 let db = factory.OpenDbConnection()
 
@@ -66,12 +85,14 @@ let app = choose [url "/" >>= request index_page
 
 let logger = Loggers.sane_defaults_for Verbose
 
+let port = defaultArg (Option.map uint16 <| env "PORT") 8080us
+
 let cfg = {
   default_config with
     logger = logger
     bindings = [ { scheme = HTTP
                    ip     = System.Net.IPAddress.Parse "0.0.0.0"
-                   port   = 8080us } ]
+                   port   = port } ]
 }
 
 web_server cfg app
