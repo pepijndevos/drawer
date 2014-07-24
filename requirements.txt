@@ -1,4 +1,4 @@
 Suave
-ServiceStack.OrmLite.Postgresql
+Npgsql
 MarkdownSharp
 mustache-sharp

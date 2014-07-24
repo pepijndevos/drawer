@@ -13,7 +13,6 @@ $(CACHEDIR): requirements.txt nuget.exe
 
 $(OUTDIR): $(CACHEDIR)
 	mkdir -p $(OUTDIR)
-	cp $(CACHEDIR)/ServiceStack.*/lib/net40/*.dll $(OUTDIR)
 	cp $(CACHEDIR)/Suave.*/lib/*.dll $(OUTDIR)
 	cp $(CACHEDIR)/Npgsql.*/lib/net40/Npgsql.dll $(OUTDIR)
 	cp $(CACHEDIR)/mustache-sharp.*/lib/net40/mustache-sharp.dll $(OUTDIR)
