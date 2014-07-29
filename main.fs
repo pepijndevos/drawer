@@ -63,6 +63,16 @@ let with_db fn req =
   conn.Open()
   fn conn req
 
+let (?||) opt1 opt2 =
+  match opt1 with
+  | Some x -> Some x
+  | None -> opt2
+
+let get_data req key =
+  let mp = get_first req.multipart_fields key
+  let uc = (form req) ^^ key
+  mp ?|| uc
+
 let compiler = FormatCompiler()
 let index_template = compiler.Compile (System.IO.File.ReadAllText "templates/index.html")
 type IndexData = {
@@ -75,9 +85,9 @@ let index_page conn req =
   OK html
 
 let webhook conn req =
-  let mtitle = get_first req.multipart_fields "subject"
-  let mplain = get_first req.multipart_fields "body-plain"
-  let mhtml  = get_first req.multipart_fields "body-html"
+  let mtitle = get_data req "subject"
+  let mplain = get_data req "body-plain"
+  let mhtml  = get_data req "body-html"
   match (mtitle, mplain, mhtml) with
   | (Some title, _, Some html) ->
     create_post conn title html
