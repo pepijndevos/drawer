@@ -81,15 +81,13 @@ let with_db fn req =
   conn.Open()
   fn conn req
 
-let (?||) opt1 opt2 =
-  match opt1 with
-  | Some x -> Some x
-  | None -> opt2
-
 let get_data req key =
   let mp = get_first req.multipart_fields key
   let uc = (form req) ^^ key
-  mp ?|| uc
+  match (mp, uc) with
+  | (_, Some d) -> Some d
+  | (Some d, _) -> Some d
+  | (_, _) -> None
 
 let compiler = FormatCompiler()
 let index_template = compiler.Compile (System.IO.File.ReadAllText "templates/index.html")
