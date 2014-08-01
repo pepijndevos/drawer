@@ -129,11 +129,14 @@ let webhook conn req =
   match (mtitle, mplain, mhtml) with
   | (Some title, _, Some (HtmlBody html)) ->
     create_post conn title html
-    OK "Posted"
+    OK "Posted extracted HTML"
+  | (Some title, _, Some html) ->
+    create_post conn title html
+    OK "Posted all HTML"
   | (Some title, Some text, None) ->
     let html = Markdown().Transform(text)
     create_post conn title html
-    OK "Posted"
+    OK "Posted Markdown"
   | _ ->
     NOT_ACCEPTABLE "Missing parameters"
 
