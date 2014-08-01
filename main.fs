@@ -55,8 +55,18 @@ let rec read_posts (reader : NpgsqlDataReader) =
   else
     []
 
-let all_posts conn =
-  let cmd = new NpgsqlCommand("SELECT id, title, body, date FROM blogpost ORDER BY date DESC LIMIT 4", conn)
+let all_posts conn page =
+  let page_size = 4
+  let cmd = new NpgsqlCommand("SELECT id, title, body, date FROM blogpost \
+                               ORDER BY date DESC LIMIT :count OFFSET :start", conn)
+  ignore <| cmd.Parameters.Add(new NpgsqlParameter("count", page_size))
+  ignore <| cmd.Parameters.Add(new NpgsqlParameter("start", page * page_size))
+  let reader = cmd.ExecuteReader()
+  read_posts reader
+
+let one_posts conn (id:int) =
+  let cmd = new NpgsqlCommand("SELECT id, title, body, date FROM blogpost WHERE id = :id", conn)
+  ignore <| cmd.Parameters.Add(new NpgsqlParameter("id", id))
   let reader = cmd.ExecuteReader()
   read_posts reader
 
@@ -85,10 +95,30 @@ let compiler = FormatCompiler()
 let index_template = compiler.Compile (System.IO.File.ReadAllText "templates/index.html")
 type IndexData = {
   posts : Blogpost list
+  next : int option
+  previous : int option
 }
 
 let index_page conn req =
-  let data = {posts = all_posts conn}
+  let data = {posts = all_posts conn 0
+              next = Some 1
+              previous = None}
+  let html = index_template.Render data
+  OK html
+
+let archive_page nr conn req =
+  let data = {posts = all_posts conn nr
+              next = Some (nr + 1)
+              previous = match nr with
+                         | 0 -> None
+                         | _ -> Some (nr - 1)}
+  let html = index_template.Render data
+  OK html
+
+let post_page id conn req =
+  let data = {posts = one_posts conn id
+              next = None
+              previous = None}
   let html = index_template.Render data
   OK html
 
@@ -108,6 +138,8 @@ let webhook conn req =
     NOT_ACCEPTABLE "Missing parameters"
 
 let app = choose [url "/" >>= (index_page |> with_db |> request)
+                  url_scan "/page/%d" (fun nr -> archive_page nr |> with_db |> request)
+                  url_scan "/post/%d" (fun id -> post_page id |> with_db |> request)
                   url "/webhook" >>= POST >>= (webhook |> with_db |> request)
                   NOT_FOUND "Found no handlers"]
 
