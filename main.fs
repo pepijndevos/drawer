@@ -1,3 +1,4 @@
+open System.Text.RegularExpressions
 open Suave.Web
 open Suave.Http
 open Suave.Http.Applicatives
@@ -17,6 +18,13 @@ let toOption a =
 
 let env =
   toOption << System.Environment.GetEnvironmentVariable
+
+let (|HtmlBody|_|) (inp:string) =
+    let opt = RegexOptions.IgnoreCase + RegexOptions.Multiline
+    let m = Regex.Match(inp, "<body[^>]*>((?:\r|\n|.)*?)<\/body>", opt)
+    if m.Success
+    then Some m.Groups.[1].Value
+    else None
 
 let dburl = Option.map (fun url -> System.Uri url) <| env "DATABASE_URL"
 
@@ -89,7 +97,7 @@ let webhook conn req =
   let mplain = get_data req "body-plain"
   let mhtml  = get_data req "body-html"
   match (mtitle, mplain, mhtml) with
-  | (Some title, _, Some html) ->
+  | (Some title, _, Some (HtmlBody html)) ->
     create_post conn title html
     OK "Posted"
   | (Some title, Some text, None) ->
