@@ -138,7 +138,9 @@ let webhook conn req =
     create_post conn title html
     OK "Posted Markdown"
   | _ ->
-    NOT_ACCEPTABLE "Missing parameters"
+    NOT_ACCEPTABLE
+    <| sprintf "Missing parameters. title? %b html? %b text? %b"
+               mtitle.IsSome mhtml.IsSome mplain.IsSome
 
 let app = choose [url "/" >>= (index_page |> with_db |> request)
                   url_scan "/page/%d" (fun nr -> archive_page nr |> with_db |> request)
